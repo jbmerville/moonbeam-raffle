@@ -48,15 +48,12 @@ const RaffleInfoCards = () => {
       of being selected.
     </>,
     <>
-      Winner is picked when either all tickets are{' '}
+      A winner is picked when either all tickets are{' '}
       <span className='text-${colorAccent}'>sold out or the timer ends</span>. Whichever comes first.
     </>,
     <>
-      Winner receives <span className='text-${colorAccent}'>{100 - raffleState.royalty}%</span> of all the{' '}
-      {currentNetwork.network.nativeCurrency?.symbol} in the pool. The house keeps {raffleState.royalty}%.
-    </>,
-    <>
-      Raffle <span className='text-${colorAccent}'>restarts automatically</span> after the end of every raffle.
+      The winner receives <span className='text-${colorAccent}'>{100 - raffleState.royalty}%</span> of all the{' '}
+      {currentNetwork.currencySymbol} in the pool. The house keeps {raffleState.royalty}%.
     </>,
     <>
       At the end of each round, the raffle is{' '}

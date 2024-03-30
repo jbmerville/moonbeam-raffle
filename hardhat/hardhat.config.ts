@@ -12,17 +12,19 @@ import '@openzeppelin/hardhat-upgrades';
 const localhostChainId = 1281;
 
 export const getCurrentNetworkChainId = () => {
-  if (process.env.NEXT_PUBLIC_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     return Moonbeam.chainId;
   }
-  if (process.env.NEXT_PUBLIC_ENV === 'development') {
+  if (process.env.NODE_ENV === 'development') {
     return MoonbaseAlpha.chainId;
   }
   return localhostChainId;
 };
 
+const admins = ['0x3D9F8E1602a0b0A5A398a75d6A9DaF6007530357'];
+
 const accounts = [];
-console.log({ NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV });
+console.log({ NODE_ENV: process.env.NODE_ENV });
 
 if (getCurrentNetworkChainId() !== localhostChainId) {
   // TODO: add test account private key to .env to deploy contract in moonbase alpha during deployment
@@ -65,8 +67,8 @@ const config = {
 task('deploy', 'Deploy the smart contracts to a network')
   .addParam('deployraffle', 'Whether to deploy the raffle smartcontract or not', 'false')
   .addParam('deploycoinflip', 'Whether to deploy the coin flip smartcontract or not', 'false')
-  .addParam('raffleticketprice', 'The price of each raffle tickets')
-  .addParam('coinflippoolamount', 'The amount of tokens to add to the coin flip pool')
+  .addParam('raffleticketprice', 'The price of each raffle tickets', '0.1')
+  .addParam('coinflippoolamount', 'The amount of tokens to add to the coin flip pool', '1')
   .setAction(async ({ deployraffle, deploycoinflip, raffleticketprice, coinflippoolamount }, hre) => {
     console.log({ deployraffle, deploycoinflip, raffleticketprice, coinflippoolamount });
     const networkName = hre.network.name;
@@ -80,8 +82,12 @@ task('deploy', 'Deploy the smart contracts to a network')
       const maxTicketAmount = 6;
 
       const Raffle = await hre.ethers.getContractFactory('Raffle');
-      const raffle = await Raffle.deploy(draftTime, maxTicketAmount, hre.ethers.utils.parseEther(raffleticketprice));
-
+      const raffle = await Raffle.deploy(
+        admins,
+        draftTime,
+        maxTicketAmount,
+        hre.ethers.utils.parseEther(raffleticketprice)
+      );
       await raffle.deployed();
 
       // await raffle.purchase([1, 3], { value: hre.ethers.utils.parseEther(ticketPrice).mul(2) });
@@ -90,11 +96,9 @@ task('deploy', 'Deploy the smart contracts to a network')
     }
     if (deploycoinflip === 'true') {
       const CoinFlip = await hre.ethers.getContractFactory('CoinFlip');
-      const coinFlip = await CoinFlip.deploy();
+      const coinFlip = await CoinFlip.deploy(admins);
 
       await coinFlip.deployed();
-
-      await coinFlip.loadFunds({ value: hre.ethers.utils.parseEther(coinflippoolamount) });
 
       writeContractAddress(networkName, 'CoinFlip', coinFlip.address);
     }
@@ -116,5 +120,11 @@ function writeContractAddress(networkName: string, contractName: string, contrac
   fs.writeFileSync(`sc-addresses/${networkName}/${contractName}.address.js`, `module.exports = '${contractAddress}';`);
   console.log(`${contractName} deployed to ${contractAddress}`);
 }
+
+// async function transferOwnership(contract: CoinFlip | Raffle) {
+//   const result = await contract.transferOwnership('0xA5C072fC2D17b4a7D532ee531dccbc25D2FD4Eb5');
+//   const owner = await contract.owner();
+//   console.log(`New owner set to ${owner}`);
+// }
 
 export default config;

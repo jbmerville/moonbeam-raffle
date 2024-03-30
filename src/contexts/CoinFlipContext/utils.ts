@@ -19,19 +19,22 @@ export interface FlipEventType {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getCoinFlipState(coinFlipContract: CoinFlip, library: any): Promise<CoinFlipStateType> {
-  const [totalVolumeData, totalFlipsData, contractBalanceData, royaltyData, maxPoolBetRatioData] = await Promise.all([
-    coinFlipContract.totalVolume(),
-    coinFlipContract.roundId(),
-    library.getBalance(coinFlipContract.address),
-    coinFlipContract.royalty(),
-    coinFlipContract.maxPoolBetRatio(),
-  ]);
+  const [totalVolumeData, totalFlipsData, contractBalanceData, royaltyData, maxPoolBetRatioData, owner] =
+    await Promise.all([
+      coinFlipContract.totalVolume(),
+      coinFlipContract.roundId(),
+      library.getBalance(coinFlipContract.address),
+      coinFlipContract.royalty(),
+      coinFlipContract.maxPoolBetRatio(),
+      coinFlipContract.owner(),
+    ]);
 
   const totalVolume = parseFloat(utils.formatEther(totalVolumeData));
   const totalFlips = totalFlipsData.toNumber();
   const contractBalance = parseFloat(utils.formatEther(contractBalanceData));
   const royalty = royaltyData / 10; // Ex: 50  -> 5% royalty
-  const maxPoolBetAmount = contractBalance * (maxPoolBetRatioData / 1000); // Ex: 250 -> 25% maxPoolBetRatio, meaning that the max tx amount = 1/4 of total pool.
+  const maxPoolBetRatio = maxPoolBetRatioData / 10;
+  const maxPoolBetAmount = (contractBalance * maxPoolBetRatio) / 100; // Ex: 250 -> 25% maxPoolBetRatio, meaning that the max tx amount = 1/4 of total pool.
 
   return {
     totalVolume,
@@ -39,6 +42,8 @@ export async function getCoinFlipState(coinFlipContract: CoinFlip, library: any)
     contractBalance,
     royalty,
     maxPoolBetAmount,
+    owner,
+    maxPoolBetRatio,
   };
 }
 

@@ -39,7 +39,7 @@ const CoinFlipTransactionResult = () => {
   const isWin = lastCoinFlipResult.draw === lastCoinFlipResult.playerChoice;
 
   return (
-    <PopUp isVisible={isPopUpOpen} setIsVisible={setIsPopUpOpen}>
+    <PopUp isVisible={isPopUpOpen} setIsVisible={setIsPopUpOpen} shake={!isWin}>
       <div className='m-3 flex flex-col items-center justify-center md:m-5 '>
         {showConfetti && (
           <div className='absolute top-32'>
@@ -61,7 +61,7 @@ const CoinFlipTransactionResult = () => {
             <CoinImage coinFace={lastCoinFlipResult.playerChoice} />
             <div className='mt-4'>Your Choice</div>
           </div>
-          <div className='flex flex-col items-center justify-center pl-8 md:pl-0'>
+          <div className='flex flex-col items-center justify-center pl-12 md:pl-0'>
             <CoinImage coinFace={lastCoinFlipResult.draw} />
             <div className='mt-4'>Flip Result</div>
           </div>

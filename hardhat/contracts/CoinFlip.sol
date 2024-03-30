@@ -1,8 +1,10 @@
 pragma solidity ^0.8.9;
 
+import 'hardhat/console.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 
-contract CoinFlip is Ownable {
+contract CoinFlip is Ownable, AccessControl {
   struct Round {
     address payable player;
     uint256 betAmount;
@@ -15,21 +17,26 @@ contract CoinFlip is Ownable {
   uint16 public royalty; // Royalty to give to the owner account when funds are redistributed. Ex: 10 => 1%, 15 => 1.5%
   uint16 public maxPoolBetRatio; // Maximum bet amount ratio allowed per transaction based on current smart contract balance (pool). Ex: Ex: 10 => 1%, 15 => 1.5%
   address payable[] players; // All the addresses that have flipped some tokens
-  mapping(uint256 => Round) public flipHistory; // map the roundId with the round data
-  mapping(address => Round[]) public playerFlipHistory; // map the address of player to its history of flips
+  bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');
 
   event Flip(Round round);
 
-  constructor() {
+  constructor(address[] memory admins) {
     roundId = 0;
     royalty = 35; // 3.5%
     maxPoolBetRatio = 250; // 25%
+    for (uint256 i = 0; i < admins.length; ++i) {
+      _setupRole(ADMIN_ROLE, address(admins[i]));
+    }
+    transferOwnership(admins[0]);
+    console.log('Deployed coin flip with owner %s', owner());
   }
 
   /**
    * @param _royalty The new royalty ratio
    */
-  function setRoyalty(uint16 _royalty) public onlyOwner {
+  function setRoyalty(uint16 _royalty) public {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
     require(_royalty <= 1000, 'Royalty should be less than or equal to 100%');
     require(_royalty >= 0, 'Royalty should be greater than or equal to 0%');
     royalty = _royalty;
@@ -38,7 +45,8 @@ contract CoinFlip is Ownable {
   /**
    * @param _maxPoolBetRatio The new maxPoolBetRatio ratio
    */
-  function setMaxPoolBetRatio(uint16 _maxPoolBetRatio) public onlyOwner {
+  function setMaxPoolBetRatio(uint16 _maxPoolBetRatio) public {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
     require(_maxPoolBetRatio <= 1000, 'maxPoolBetRatio should be less than or equal to 100%');
     require(_maxPoolBetRatio >= 0, 'maxPoolBetRatio should be greater than or equal to 0%');
     maxPoolBetRatio = _maxPoolBetRatio;
@@ -62,11 +70,10 @@ contract CoinFlip is Ownable {
     bool draw = getRandomFlip();
 
     // Fees
-    uint256 feesAmount = payOwner(msg.value);
+    uint256 feesAmount = (msg.value * royalty) / 1000;
+    payOwner(feesAmount);
 
     Round memory round = Round(payable(msg.sender), msg.value, _playerChoice, draw);
-    flipHistory[roundId] = round;
-    playerFlipHistory[msg.sender].push(round);
 
     // Winner rewards
     if (draw == _playerChoice) {
@@ -77,13 +84,19 @@ contract CoinFlip is Ownable {
     emit Flip(round);
   }
 
-  function payOwner(uint256 _betAmount) private returns (uint256) {
-    uint256 feesAmount = (_betAmount * royalty) / 1000;
-    payable(owner()).transfer(feesAmount);
-    return feesAmount;
+  function withdraw(uint256 amount) public {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+
+    payOwner(amount);
   }
 
-  function loadFunds() external payable onlyOwner {}
+  function payOwner(uint256 amount) private {
+    payable(owner()).transfer(amount);
+  }
+
+  function loadFunds() external payable {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+  }
 
   function getRandomFlip() private view returns (bool) {
     return

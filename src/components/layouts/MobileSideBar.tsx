@@ -1,8 +1,8 @@
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Link from 'next/link';
 import React from 'react';
 
+import HeaderLink from '@/components/layouts/Header/HeaderLink';
 import HeaderNetworkSelect from '@/components/layouts/Header/HeaderNetworkSelect';
 import { LinkType } from '@/components/layouts/Layout';
 
@@ -28,26 +28,18 @@ const MobileSideBar = (props: MobileSideBarProps) => {
           >
             <FontAwesomeIcon
               icon={faEllipsis}
-              size='xs'
-              className={`w-8 text-sm text-gray-500 ${isMobileSideBarOpen ? 'rotate-0' : 'rotate-90'} transition`}
+              size='xl'
+              className={`h-10 w-6 text-sm text-gray-500 ${isMobileSideBarOpen ? 'rotate-0' : 'rotate-90'} transition`}
             />
           </div>
           <ul className='mt-12 space-y-2'>
             {links.map((link) => (
               <li key={link.url}>
-                <Link key={link.url} href={link.url}>
-                  <a
-                    onClick={toggleMobileSideBar}
-                    className='flex items-center justify-start rounded-lg p-4 text-lg text-white hover:bg-gray-700'
-                  >
-                    {link.name}{' '}
-                    {link.description && <div className='pl-2 text-xs text-white/50'> - {link.description}</div>}
-                  </a>
-                </Link>
+                <HeaderLink link={link} />
               </li>
             ))}
             <li className='flex items-center justify-center p-4'>
-              <HeaderNetworkSelect className='mr-4 w-max' />
+              <HeaderNetworkSelect className='mr-4 w-full' />
             </li>
           </ul>
         </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 
 import CoinFlipping from '@/components/pages/coinflip/CoinFlipFaceSelection/CoinFlipping';
-import Coin from '@/components/pages/coinflip/CoinFlipFaceSelection/CoinSelectable';
+import CoinSelectable from '@/components/pages/coinflip/CoinFlipFaceSelection/CoinSelectable';
 
 import { useCoinFlipContext } from '@/contexts/CoinFlipContext';
 
@@ -17,17 +17,17 @@ const CoinFlipFaceSelection = (props: CoinFlipFaceSelectionPropsType) => {
 
   return (
     <div className='layout flex flex-col items-center justify-center'>
-      <div className='md:b-20 mb-3 mt-14 flex flex-row items-center justify-between md:mt-36'>
-        {isTransactionPending ? (
+      <div className='mb-3 mt-20 flex flex-row items-center justify-between md:mt-36'>
+        {isTransactionPending.flip ? (
           <CoinFlipping />
         ) : (
           <>
-            <Coin
+            <CoinSelectable
               playerCoinFaceChoice={playerCoinFaceChoice}
               setPlayerCoinFaceChoice={setPlayerCoinFaceChoice}
               coinFace={CoinFace.HEADS}
             />
-            <Coin
+            <CoinSelectable
               playerCoinFaceChoice={playerCoinFaceChoice}
               setPlayerCoinFaceChoice={setPlayerCoinFaceChoice}
               coinFace={CoinFace.TAILS}

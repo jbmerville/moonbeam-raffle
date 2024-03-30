@@ -5,9 +5,9 @@ import { getNetworkLogo } from '@/lib/helpers';
 import useIsMobile from '@/hooks/useIsMobile';
 
 import Button from '@/components/buttons/Button';
-import DevTokenLink from '@/components/DevTokenLink';
 import RaffleTicket from '@/components/pages/raffle/RaffleTicket';
 import { getMaxRaffleTicketPerTransaction, getNonDefaultRaffleSelectedTickets } from '@/components/pages/raffle/utils';
+import TransactionWarningMessage from '@/components/TransactionWarningMessage';
 
 import { useCurrentNetworkContext } from '@/contexts/CurrentNetwork';
 import { useRaffleContext } from '@/contexts/RaffleContext';
@@ -85,8 +85,7 @@ const RaffleSelectedTickets = (props: RaffleSelectedTicketsPropsType) => {
 
                 {nonDefaultRaffleSelectedTickets.length === 0 ? (
                   <p>
-                    Ticket price: {utils.formatEther(raffleState.ticketPrice)}{' '}
-                    {currentNetwork.network.nativeCurrency?.symbol}
+                    Ticket price: {utils.formatEther(raffleState.ticketPrice)} {currentNetwork.currencySymbol}
                   </p>
                 ) : (
                   <p>
@@ -98,7 +97,7 @@ const RaffleSelectedTickets = (props: RaffleSelectedTicketsPropsType) => {
               </span>
             )}
           </Button>
-          <DevTokenLink />
+          <TransactionWarningMessage className='mt-3' transactionStatus={transactionStatus} />
         </div>
       </div>
     </div>

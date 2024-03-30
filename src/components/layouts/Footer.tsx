@@ -1,8 +1,14 @@
 import React from 'react';
 
-const Footer = () => {
+interface FooterPropsType {
+  className?: string;
+}
+
+const Footer = (props: FooterPropsType) => {
+  const { className } = props;
+
   return (
-    <div className='bg-moonbeam-grey'>
+    <div className={`${className} ${className?.includes('bg-') ? '' : 'bg-moonbeam-grey'}`}>
       <div className='layout flex flex-col items-center justify-center border-t border-[#474d57] pt-6 pb-6 md:border-t-[0.5px]'>
         <div className='flex w-full items-center justify-center text-center  text-xs text-white/50 md:text-sm'>
           MoonVegas is not available in Excluded Jurisdictions. By accessing and using the interface you agree with our

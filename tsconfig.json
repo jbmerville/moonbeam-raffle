@@ -21,6 +21,6 @@
     "incremental": true
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", "src/components/InfoCards"],
-  "exclude": ["node_modules", "hardhat"],
+  "exclude": ["node_modules", "hardhat", "cypress"],
   "moduleResolution": ["node_modules", ".next", "node"]
 }

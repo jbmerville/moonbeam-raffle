@@ -43,21 +43,22 @@ const CoinFlipInfoCards = () => {
   };
   const popUpBulletPoints: ReactNode[] = [
     <>
-      Draws are set to a <span className='text-${colorAccent}'> 50/50</span> chance of HEADS or TAILS winning.
+      Draws are guaranteed to have a <span className='text-${colorAccent}'> 50/50</span> chance of HEADS or TAILS
+      winning.
     </>,
     <>
-      Pick the <span className='text-${colorAccent}'>same face as the one the smart contract flips</span>, and you win
-      the coin flip. If you win, the smart contract sends you back double your bet amount during the same transaction.
+      Pick the <span className='text-${colorAccent}'>same face as the outcome of the smart contract</span>, and you win
+      the coin flip. If you win, the smart contract sends you back double your bet.
     </>,
     <>
-      Pick the <span className='text-${colorAccent}'>opposite face as the one the smart contract flips</span>, and you
+      Pick the <span className='text-${colorAccent}'>opposite face as the outcome of the smart contract</span>, and you
       lose the coin flip. If you lose, the smart contract keeps your bet.
     </>,
     <>
       <span className='text-${colorAccent}'>
         The bigger the smart contract balance, the bigger the allowed bet amount
       </span>
-      . This is so the smart contract balance does not get emptied after a few lucky flips in a row.
+      . This is so the smart contract balance does not get emptied after a few consecutive lucky flips.
     </>,
   ];
 

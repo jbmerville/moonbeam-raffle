@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { toast } from 'react-toastify';
 
 import { getNetworkLogo } from '@/lib/helpers';
+import useIsMobile from '@/hooks/useIsMobile';
 
 import Button from '@/components/buttons/Button';
 
@@ -17,22 +18,23 @@ interface CoinFlipBetAmountButtonPropsType {
 }
 const CoinFlipBetAmountButton = (props: CoinFlipBetAmountButtonPropsType) => {
   const { betAmount, setCurrentSelectedBetAmount, isCurrentSelectedBetAmount } = props;
+  const isMobile = useIsMobile();
   const { coinFlipState } = useCoinFlipContext();
   const { account } = useEthers();
   const { currentNetwork } = useCurrentNetworkContext();
   const accountBalance = useEtherBalance(account);
-  const doesPlayerHasInsufficiantBalanceForBet =
+  const doesPlayerHaveInsufficiantBalanceForBet =
     accountBalance && parseFloat(utils.formatEther(accountBalance)) < betAmount;
-  const doesSCHasInsufficiantBalanceForBet = betAmount >= coinFlipState.maxPoolBetAmount;
+  const doesSCHaveInsufficiantBalanceForBet = betAmount >= coinFlipState.maxPoolBetAmount;
   const [isHover, setIsHover] = useState(false);
-  const isDisabled = doesSCHasInsufficiantBalanceForBet || doesPlayerHasInsufficiantBalanceForBet;
+  const isDisabled = doesSCHaveInsufficiantBalanceForBet || doesPlayerHaveInsufficiantBalanceForBet;
 
   const onButtonClick = () => {
-    if (doesSCHasInsufficiantBalanceForBet) {
+    if (doesSCHaveInsufficiantBalanceForBet) {
       toast.dark(`Insufficient smart contract balance to allow this bet amount`, {
         type: toast.TYPE.WARNING,
       });
-    } else if (doesPlayerHasInsufficiantBalanceForBet) {
+    } else if (doesPlayerHaveInsufficiantBalanceForBet) {
       toast.dark(`Insufficient ${currentNetwork.currencySymbol} balance in your account`, {
         type: toast.TYPE.WARNING,
       });
@@ -40,6 +42,26 @@ const CoinFlipBetAmountButton = (props: CoinFlipBetAmountButtonPropsType) => {
       setCurrentSelectedBetAmount(betAmount);
     }
   };
+
+  const renderButtonText = () => {
+    if ((doesSCHaveInsufficiantBalanceForBet || doesPlayerHaveInsufficiantBalanceForBet) && isHover) {
+      if (isMobile) {
+        return 'Unavailable';
+      }
+      if (doesSCHaveInsufficiantBalanceForBet) {
+        return 'Insufficient SC Balance';
+      }
+      return 'Insufficient Balance';
+    }
+
+    return (
+      <div className={`flex items-center justify-center md:text-lg ${isDisabled && 'opacity-50'}`}>
+        <div className='mr-2 scale-[1.2] md:mr-3 md:scale-[1.5]'>{getNetworkLogo(currentNetwork.network.chainId)}</div>
+        {betAmount} {currentNetwork.currencySymbol}
+      </div>
+    );
+  };
+
   return (
     <Button
       onMouseEnter={() => {
@@ -50,20 +72,11 @@ const CoinFlipBetAmountButton = (props: CoinFlipBetAmountButtonPropsType) => {
       }}
       variant={isCurrentSelectedBetAmount ? 'outline' : 'primary'}
       onClick={onButtonClick}
-      className={`box-border flex w-full justify-center text-xs uppercase text-white md:text-lg  ${
-        isDisabled && isHover ? 'text-[0.55em]' : ''
-      } ${isDisabled ? 'bg-moonbeam-grey-light text-white' : 'font-bold '}`}
+      className={`box-border flex w-full justify-center p-1 text-sm uppercase md:p-2 md:text-base md:hover:text-base ${
+        isDisabled ? 'bg-moonbeam-grey-light text-white' : 'font-bold'
+      }`}
     >
-      {doesSCHasInsufficiantBalanceForBet && isHover ? (
-        <div className='text-xs'>Insufficient pool balance</div>
-      ) : doesPlayerHasInsufficiantBalanceForBet && isHover ? (
-        'Insufficient balance'
-      ) : (
-        <div className='flex items-center justify-center'>
-          <div className='mr-3 scale-[1.2] md:scale-[1.5]'>{getNetworkLogo(currentNetwork.network.chainId)}</div>
-          {betAmount} {currentNetwork.currencySymbol}
-        </div>
-      )}
+      {renderButtonText()}
     </Button>
   );
 };

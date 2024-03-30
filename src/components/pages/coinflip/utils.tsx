@@ -1,3 +1,4 @@
+import { TransactionState } from '@usedapp/core';
 import { BigNumber, providers, utils } from 'ethers/lib/ethers';
 
 import { coinFlipAbi } from '@/contexts/CoinFlipContext';
@@ -15,26 +16,29 @@ export interface CoinFlipTransactionType {
 }
 
 export async function getCoinFlipTransactionHistory(
-  currentNetworkRpcUrl: string,
   explorerApiEndpoint: string,
   coinFlipAddress: string
-): Promise<CoinFlipTransactionType[]> {
+): Promise<ExplorerTransactionType[]> {
   const result = await fetch(`${explorerApiEndpoint}?module=account&action=txlist&address=${coinFlipAddress}`);
   const json = await result.json();
 
   const transactions = json.result as ExplorerTransactionType[];
   if (typeof transactions === 'object' && transactions !== null) {
-    return (
-      await Promise.all(
-        json.result
-          .filter(shouldTransactionBeFiltered)
-          .map((transaction: ExplorerTransactionType) =>
-            parseExplorerTransaction(currentNetworkRpcUrl, transaction, coinFlipAddress)
-          )
-      )
-    ).sort(sortTransactions);
+    return (await Promise.all(json.result.filter(shouldTransactionBeFiltered))).sort(sortTransactions);
   }
   return [];
+}
+
+export async function getTransactionsWithOutcome(
+  transactions: ExplorerTransactionType[],
+  currentNetworkRpcUrl: string,
+  coinFlipAddress: string
+): Promise<CoinFlipTransactionType[]> {
+  return await Promise.all(
+    transactions.map((transaction: ExplorerTransactionType) =>
+      parseExplorerTransaction(currentNetworkRpcUrl, transaction, coinFlipAddress)
+    )
+  );
 }
 
 async function parseExplorerTransaction(
@@ -93,6 +97,25 @@ function parseTransactionInput(transaction: ExplorerTransactionType): CoinFace |
   }
 }
 
-function sortTransactions(transaction1: CoinFlipTransactionType, transaction2: CoinFlipTransactionType) {
-  return transaction1.date > transaction2.date ? -1 : 1;
+function sortTransactions(transaction1: ExplorerTransactionType, transaction2: ExplorerTransactionType) {
+  const date1 = new Date(parseInt(transaction1.timeStamp) * 1000);
+  const date2 = new Date(parseInt(transaction2.timeStamp) * 1000);
+  return date1.getTime() > date2.getTime() ? -1 : 1;
+}
+
+export function getOutcomeCoinFace(transaction: CoinFlipTransactionType): CoinFace {
+  if (transaction.isWin) {
+    return transaction.choice || CoinFace.HEADS;
+  }
+  return transaction.choice === CoinFace.HEADS ? CoinFace.TAILS : CoinFace.HEADS;
+}
+
+export function parseTransactionStatus(transactionStatus: TransactionState) {
+  if (transactionStatus === 'None') {
+    return 'Loading';
+  }
+  if (transactionStatus === 'PendingSignature') {
+    return 'Pending Signature';
+  }
+  return transactionStatus;
 }

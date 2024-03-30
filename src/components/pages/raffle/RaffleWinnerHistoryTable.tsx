@@ -54,7 +54,7 @@ const RaffleWinnerHistoryTable = () => {
         inputs: [{ value: 'Address' }, { value: 'Winnings' }, { value: 'Winning Ticket' }, { value: 'Total Tickets' }],
       }}
       isLoading={isRaffleStateFetching}
-      rows={renderRowsFromTransaction()}
+      transactions={renderRowsFromTransaction()}
       emptyRowMessage='No raffle winners yet.'
     ></Table>
   );

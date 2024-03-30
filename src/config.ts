@@ -10,6 +10,11 @@ import raffleAddressMoonriver from 'hardhat/sc-addresses/moonriver/Raffle.addres
 
 import { isDev, isProd } from '@/constants/env';
 
+export const smartCountractAdminAddresses = [
+  '0x3D9F8E1602a0b0A5A398a75d6A9DaF6007530357',
+  '0x2C1a07a4cCEeeDBbb2f8134867cbDe7cC812652D',
+];
+
 export const LocalhostChain: Chain = {
   chainId: 1281,
   chainName: 'Moonbeam Localhost',
@@ -36,7 +41,7 @@ export const LocalhostConfig: Config = {
   },
 };
 
-const defaultBetAmounts = [1, 2, 5, 10, 15, 20, 30, 100];
+const defaultBetAmounts = [1, 2, 5, 10, 15, 20, 30, 100, 150];
 
 export const chains: { [key: number]: Chain } = {
   [LocalhostChain.chainId]: LocalhostChain,
@@ -47,8 +52,8 @@ export const chains: { [key: number]: Chain } = {
 
 export const chainBetAmounts: { [key: number]: number[] } = {
   [LocalhostChain.chainId]: defaultBetAmounts,
-  [MoonbaseAlpha.chainId]: defaultBetAmounts,
-  [Moonriver.chainId]: [0.1, 0.5, 1, 2, 5, 10, 15, 20],
+  [MoonbaseAlpha.chainId]: [0.1, 0.5, 1, 2, 5, 10, 15, 20, 50],
+  [Moonriver.chainId]: [0.1, 0.5, 1, 2, 5, 10, 15, 20, 50],
   [Moonbeam.chainId]: defaultBetAmounts,
 };
 
@@ -99,11 +104,8 @@ export const explorerApiEndpoints: { [key: number]: string } = {
 };
 
 export const getDefaultChainId = (): number => {
-  if (isProd) {
+  if (isProd || isDev) {
     return Moonbeam.chainId;
-  }
-  if (isDev) {
-    return MoonbaseAlpha.chainId;
   }
   return LocalhostChain.chainId;
 };
@@ -125,6 +127,6 @@ export const getDefaultChain = (): Chain => {
 
 // eslint-disable-next-line no-console
 console.log({
-  NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
+  NODE_ENV: process.env.NODE_ENV,
   currentNetwork: getDefaultChain().chainName,
 });

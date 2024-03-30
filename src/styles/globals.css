@@ -146,6 +146,10 @@
   .animated-coin-tails {
     animation: flip-tail 0.8s linear 0s infinite alternate;
   }
+  .animated-shake {
+    animation: tilt-shaking 0.15s linear;
+    animation-iteration-count: 5;
+  }
 }
 
 /* Self created styles */
@@ -195,7 +199,7 @@
 
   50% {
     animation-timing-function: ease-out;
-    transform: translateY(-50px);
+    transform: translateY(-60px);
   }
 }
 
@@ -257,6 +261,36 @@
   }
 }
 
+@keyframes tilt-shaking {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  50% {
+    transform: rotate(0eg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes scaling-flip {
+  20% {
+    transform: translateY(-30px);
+  }
+
+  50% {
+    transform: translateY(-75px) scale(0.9);
+  }
+}
+
+@media (max-width: 768px) {
+}
 @media (min-width: 768px) {
   .navbar-container {
     grid-template-areas:
@@ -279,7 +313,7 @@
   }
   @keyframes scaling-flip {
     20% {
-      transform: translateY(-80px);
+      transform: translateY(0px);
     }
 
     50% {

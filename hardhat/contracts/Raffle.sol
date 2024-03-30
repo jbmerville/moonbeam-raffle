@@ -4,8 +4,9 @@ pragma solidity ^0.8.9;
 // Import this file to use console.log
 import 'hardhat/console.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
+import '@openzeppelin/contracts/access/AccessControl.sol';
 
-contract Raffle is Ownable {
+contract Raffle is Ownable, AccessControl {
   struct RaffleHistory {
     address winner;
     uint256 winningTicket;
@@ -33,17 +34,14 @@ contract Raffle is Ownable {
   RaffleHistory[] public raffleHistory; // History of all the previous raffles excluding the current one
   TicketBought[] public ticketsBought; // All the ticketIds that have been bought already
   bool public raffleEnd; // Whether the raffle has ended or not.
+  bytes32 public constant ADMIN_ROLE = keccak256('ADMIN_ROLE');
 
   // ========== Events ===============
   event PurchasedTickets(address player, uint256[] ticketsBought);
   event RaffleEnd(address winner, uint256 winningTicket, uint256 ticketAmount);
 
   // ========== Constructor ==========
-  constructor(
-    uint256 _draftTime,
-    uint256 _maxTicketAmount,
-    uint256 _ticketPrice
-  ) payable {
+  constructor(address[] memory _admins, uint256 _draftTime, uint256 _maxTicketAmount, uint256 _ticketPrice) payable {
     require(block.timestamp < _draftTime, 'Draft end time should be in the future');
 
     draftTime = _draftTime;
@@ -56,13 +54,19 @@ contract Raffle is Ownable {
     ticketPrice = _ticketPrice;
     nextRaffleTicketPrice = _ticketPrice;
     royalty = 50; // 5%
+    for (uint256 i = 0; i < _admins.length; ++i) {
+      _setupRole(ADMIN_ROLE, address(_admins[i]));
+    }
+    transferOwnership(_admins[0]);
+    console.log('Deployed raffle with owner %s with %d tickets', owner(), _maxTicketAmount);
   }
 
   // ========== Owner Functions =====
   /**
    * @param _royalty The new royalty amount
    */
-  function setRoyalty(uint16 _royalty) external onlyOwner {
+  function setRoyalty(uint16 _royalty) external {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
     require(_royalty <= 1000, 'Royalty should be less than or equal to 1000');
 
     royalty = _royalty;
@@ -71,28 +75,36 @@ contract Raffle is Ownable {
   /**
    * @param _nextRaffleTicketPrice The max amount of tickets in the next raffle
    */
-  function setNextRaffleTicketPrice(uint256 _nextRaffleTicketPrice) external onlyOwner {
+  function setNextRaffleTicketPrice(uint256 _nextRaffleTicketPrice) external {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+
     nextRaffleTicketPrice = _nextRaffleTicketPrice;
   }
 
   /**
    * @param _nextRaffleMaxTicketAmount The ticket price of the next raffle
    */
-  function setNextRaffleMaxTicketAmount(uint256 _nextRaffleMaxTicketAmount) external onlyOwner {
+  function setNextRaffleMaxTicketAmount(uint256 _nextRaffleMaxTicketAmount) external {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+
     nextRaffleMaxTicketAmount = _nextRaffleMaxTicketAmount;
   }
 
   /**
    * @param _nextDraftDuration The duration of the next draft in seconds
    */
-  function setNextDraftDuration(uint256 _nextDraftDuration) external onlyOwner {
+  function setNextDraftDuration(uint256 _nextDraftDuration) external {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+
     nextDraftDuration = _nextDraftDuration;
   }
 
   /**
    * @param _currentDraftDurationFromNow The duration of the current draft in milliseconds, from the moment of the transaction
    */
-  function resetCurrentDraftDurationFromNow(uint256 _currentDraftDurationFromNow) external onlyOwner {
+  function resetCurrentDraftDurationFromNow(uint256 _currentDraftDurationFromNow) external {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+
     draftTime = block.timestamp + _currentDraftDurationFromNow;
   }
 
@@ -117,6 +129,7 @@ contract Raffle is Ownable {
       currTicketAmount++;
       ticketsBought.push(TicketBought({owner: msg.sender, ticketId: _ticketIds[i]})); // TODO add test to verify that this is populated properly
       ticketsBoughtByPlayer[msg.sender].push(_ticketIds[i]);
+      console.log('Purchasing ticket #%s with owner %s', _ticketIds[i], ticketsOwner[_ticketIds[i]]);
     }
 
     currentPlayers.push(msg.sender);
@@ -127,11 +140,26 @@ contract Raffle is Ownable {
     }
   }
 
+  function endRaffleAdmin() external {
+    require(hasRole(ADMIN_ROLE, msg.sender), 'Caller is not an admin');
+
+    if (currTicketAmount > 0) {
+      endRaffle();
+    }
+  }
+
   // ========== Private Functions ====
   function endRaffle() private {
     raffleEnd = true;
-    uint256 winningTicketId = getRandomTicketId();
-    address payable winner = payable(ticketsBought[winningTicketId].owner);
+    uint256 index = getRandomTicketsBought();
+    if (index >= ticketsBought.length) {
+      console.log('Reverting transaction because ticket picked %s >= %s tickets bought', ticketsBought.length, index);
+      revert();
+    }
+
+    TicketBought memory winningTicket = ticketsBought[getRandomTicketsBought()];
+    console.log('Winning ticket is #%s with owner %s', winningTicket.ticketId, winningTicket.owner);
+    address payable winner = payable(winningTicket.owner);
     uint256 balance = address(this).balance;
 
     // Fees
@@ -141,8 +169,8 @@ contract Raffle is Ownable {
     uint256 winnerCut = balance - feesAmount;
     winner.transfer(winnerCut);
 
-    resetRaffle(RaffleHistory(winner, winningTicketId, maxTicketAmount, ticketPrice));
-    emit RaffleEnd(winner, winningTicketId, maxTicketAmount);
+    resetRaffle(RaffleHistory(winner, winningTicket.ticketId, maxTicketAmount, ticketPrice));
+    emit RaffleEnd(winner, winningTicket.ticketId, maxTicketAmount);
   }
 
   function payOwner() private returns (uint256) {
@@ -172,15 +200,15 @@ contract Raffle is Ownable {
     delete currentPlayers;
   }
 
-  // ========== View =================
-  function getRandomTicketId() private view returns (uint256) {
-    return
-      ((
-        uint256(
-          keccak256(abi.encodePacked(msg.sender, block.coinbase, block.difficulty, block.gaslimit, block.timestamp))
-        )
-      ) % ticketsBought.length) + 1;
+  function getRandomTicketsBought() private view returns (uint256) {
+    return ((
+      uint256(
+        keccak256(abi.encodePacked(msg.sender, block.coinbase, block.difficulty, block.gaslimit, block.timestamp))
+      )
+    ) % ticketsBought.length);
   }
+
+  // ========== View =================
 
   function getTicketsBought() public view returns (TicketBought[] memory) {
     return ticketsBought;

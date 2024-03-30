@@ -18,11 +18,21 @@ type ButtonProps = {
   isLoading?: boolean;
   isDarkBg?: boolean;
   variant?: keyof typeof ButtonVariant;
+  onClick?: any;
 } & React.ComponentPropsWithRef<'button'>;
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
-    { children, className, disabled: buttonDisabled, isLoading, variant = 'primary', isDarkBg = false, ...rest },
+    {
+      children,
+      className,
+      disabled: buttonDisabled,
+      isLoading,
+      onClick,
+      variant = 'primary',
+      isDarkBg = false,
+      ...rest
+    },
     ref
   ) => {
     const disabled = isLoading || buttonDisabled;
@@ -33,6 +43,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type='button'
         disabled={disabled}
+        onClick={onClick}
         className={clsxm(
           'box-border border-2 border-transparent',
           'inline-flex items-center rounded px-4 py-2 font-medium',

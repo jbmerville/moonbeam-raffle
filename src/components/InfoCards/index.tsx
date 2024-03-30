@@ -34,7 +34,7 @@ const InfoCards = (props: InfoCardsPropsType) => {
             <p className={`text-${colorAccent} text-3xl font-bold md:text-5xl`}>{gameName}</p>
             <p className={`text-${colorAccent} text-sm font-light opacity-80 md:text-lg`}>{description}</p>
           </div>
-          <div className='grid w-full grid-rows-2 items-center gap-3 pt-8 md:grid-cols-3 md:grid-rows-1 md:gap-5 md:pt-5'>
+          <div className='grid w-full grid-rows-2 items-center gap-3 pt-1 md:grid-cols-3 md:grid-rows-1 md:gap-5 md:pt-5'>
             <InfoCard {...infoCard1} />
             <InfoCard {...infoCard2} className='md:hidden' />
             <InfoCard {...infoCard3} className='col-span-2 md:col-span-1' onClick={onReadRulesClick} />

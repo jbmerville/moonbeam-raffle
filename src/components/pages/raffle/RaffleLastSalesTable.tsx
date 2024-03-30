@@ -70,7 +70,7 @@ const RaffleLastSalesTable = () => {
       header={{
         inputs: [{ value: 'Date' }, { value: 'Address' }, { value: 'Tickets Bought' }, { value: 'Price' }],
       }}
-      rows={renderRowsFromTransaction()}
+      transactions={renderRowsFromTransaction()}
       isLoading={isLoading}
       emptyRowMessage='No transactions found'
     ></Table>

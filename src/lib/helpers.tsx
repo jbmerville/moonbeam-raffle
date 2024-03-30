@@ -1,4 +1,4 @@
-import { Chain, MoonbaseAlpha, Moonriver } from '@usedapp/core';
+import { Chain, MoonbaseAlpha, Moonriver, TransactionStatus } from '@usedapp/core';
 import { utils } from 'ethers/lib/ethers';
 import { ReactNode } from 'react';
 import { toast } from 'react-toastify';
@@ -7,7 +7,7 @@ import EthereumIcon from '@/components/icons/EthereumIcon';
 import MoonbeamIcon from '@/components/icons/MoonbeamIcon';
 import MoonriverIcon from '@/components/icons/MoonriverIcon';
 
-import { availableNetworks, chains } from '@/config';
+import { availableNetworks, chains, smartCountractAdminAddresses } from '@/config';
 
 /**
  * Function that pauses execution
@@ -25,7 +25,7 @@ export function getNetworkLogo(chainId: number, circle?: boolean): ReactNode {
   if (chainId === Moonriver.chainId) {
     if (circle) {
       return (
-        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-black/30'>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-white/40'>
           <MoonriverIcon />
         </div>
       );
@@ -40,7 +40,7 @@ export function getNetworkLogo(chainId: number, circle?: boolean): ReactNode {
   // Default value
   if (circle) {
     return (
-      <div className='flex h-6 w-6 items-center justify-center rounded-full bg-black/30'>
+      <div className='flex h-6 w-6 items-center justify-center rounded-full bg-white/40'>
         <MoonbeamIcon />
       </div>
     );
@@ -81,4 +81,40 @@ export function getNetworkFromChainId(chaindId?: number): Chain {
     return chains[MoonbaseAlpha.chainId];
   }
   return networks[0];
+}
+
+export function toastOnStatusChange(state: TransactionStatus) {
+  if (state.status === 'Mining') {
+    toast.dark('Transaction sent', { type: toast.TYPE.INFO });
+  } else if (state.status === 'PendingSignature') {
+    toast.dark('Please confirm transaction on Metamask', { type: toast.TYPE.INFO });
+  } else if (state.status === 'Success') {
+    toast.dark('Transaction successful', { type: toast.TYPE.INFO });
+  } else if (state.status === 'Fail') {
+    toast.dark(`Transaction failed with error: ${state.errorMessage}`, {
+      type: toast.TYPE.ERROR,
+    });
+  } else if (state.status === 'Exception') {
+    toast.dark(`Transaction resulted in exception: ${state.errorMessage}`, {
+      type: toast.TYPE.ERROR,
+    });
+  }
+}
+
+export function isAccountAdmin(account?: string): boolean {
+  if (account) {
+    return smartCountractAdminAddresses.includes(account);
+  }
+  return false;
+}
+
+export function isPercentageValid(percentage: number): boolean {
+  if (percentage <= 0) {
+    toast.dark('Percentage should be > 0', { type: toast.TYPE.ERROR });
+    return false;
+  } else if (percentage >= 100) {
+    toast.dark('Percentage should be < 100', { type: toast.TYPE.ERROR });
+    return false;
+  }
+  return true;
 }

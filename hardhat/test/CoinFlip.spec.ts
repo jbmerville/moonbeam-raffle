@@ -11,14 +11,14 @@ describe('CoinFlip', function () {
   // and reset Hardhat Network to that snapshot in every test.
   async function deployCoinFlipFixture() {
     // Contracts are deployed using the first signer/account by default
-    const [owner, account1, otherAccount2] = await ethers.getSigners();
+    const [creator, owner, admin, user] = await ethers.getSigners();
     const CoinFlip = await ethers.getContractFactory('CoinFlip');
-    const coinFlip = await CoinFlip.deploy();
-    await coinFlip.loadFunds({
+    const coinFlip = await CoinFlip.deploy([owner.address, admin.address, owner.address, owner.address]);
+    await coinFlip.connect(owner).loadFunds({
       value: DEFAULT_SC_BALANCE,
     });
 
-    return { coinFlip, owner, account1, otherAccount2 };
+    return { coinFlip, owner, creator, user, admin };
   }
 
   describe('Deployment', function () {
@@ -27,7 +27,7 @@ describe('CoinFlip', function () {
       const { coinFlip, owner } = await loadFixture(deployCoinFlipFixture);
 
       // Act
-      const actual = await coinFlip.owner();
+      const actual = await coinFlip.connect(owner).owner();
 
       // Assert
       expect(actual).to.equal(owner.address);
@@ -53,6 +53,87 @@ describe('CoinFlip', function () {
 
       // Assert
       expect(actual).to.equal(BigNumber.from(0));
+    });
+  });
+
+  describe('Owner', function () {
+    describe('Add', function () {
+      it('Should let owner withdray funds', async function () {
+        // Arrange
+        const { coinFlip, owner } = await loadFixture(deployCoinFlipFixture);
+
+        // Act
+        await coinFlip.connect(owner).loadFunds({ value: DEFAULT_SC_BALANCE.div(10) });
+
+        // Assert
+        const actual = await ethers.provider.getBalance(coinFlip.address);
+        expect(actual).to.equal(DEFAULT_SC_BALANCE.add(DEFAULT_SC_BALANCE.div(10)));
+      });
+    });
+    describe('Withdraw', function () {
+      it('Should let owner withdray funds', async function () {
+        // Arrange
+        const { coinFlip, owner } = await loadFixture(deployCoinFlipFixture);
+
+        // Act
+        await coinFlip.connect(owner).withdraw(DEFAULT_SC_BALANCE.div(10));
+
+        // Assert
+        const actual = await ethers.provider.getBalance(coinFlip.address);
+        expect(actual).to.equal(DEFAULT_SC_BALANCE.sub(DEFAULT_SC_BALANCE.div(10)));
+      });
+    });
+  });
+
+  describe('Admin', function () {
+    describe('Add', function () {
+      it('Should let admin add funds', async function () {
+        // Arrange
+        const { coinFlip, admin } = await loadFixture(deployCoinFlipFixture);
+
+        // Act
+        await coinFlip.connect(admin).loadFunds({ value: DEFAULT_SC_BALANCE.div(10) });
+
+        // Assert
+        const actual = await ethers.provider.getBalance(coinFlip.address);
+        expect(actual).to.equal(DEFAULT_SC_BALANCE.add(DEFAULT_SC_BALANCE.div(10)));
+      });
+
+      it('Should not let non-admin add funds', async function () {
+        // Arrange
+        const { coinFlip, user } = await loadFixture(deployCoinFlipFixture);
+
+        // Act
+        const actual = coinFlip.connect(user).loadFunds({ value: DEFAULT_SC_BALANCE.div(10) });
+
+        // Assert
+        await expect(actual).to.be.revertedWith('Caller is not an admin');
+      });
+    });
+
+    describe('Withdraw', function () {
+      it('Should let admin withdraw funds', async function () {
+        // Arrange
+        const { coinFlip, admin } = await loadFixture(deployCoinFlipFixture);
+
+        // Act
+        await coinFlip.connect(admin).withdraw(DEFAULT_SC_BALANCE.div(10));
+
+        // Assert
+        const actual = await ethers.provider.getBalance(coinFlip.address);
+        expect(actual).to.equal(DEFAULT_SC_BALANCE.sub(DEFAULT_SC_BALANCE.div(10)));
+      });
+
+      it('Should not let non-admin withdraw funds', async function () {
+        // Arrange
+        const { coinFlip, user } = await loadFixture(deployCoinFlipFixture);
+
+        // Act
+        const actual = coinFlip.connect(user).withdraw(DEFAULT_SC_BALANCE.div(10));
+
+        // Assert
+        await expect(actual).to.be.revertedWith('Caller is not an admin');
+      });
     });
   });
 
@@ -97,21 +178,21 @@ describe('CoinFlip', function () {
 
       it('Should send rewards to player after wining transaction', async function () {
         // Arrange
-        const { coinFlip, owner, account1 } = await loadFixture(deployCoinFlipFixture);
+        const { coinFlip, owner, user } = await loadFixture(deployCoinFlipFixture);
 
         await ethers.provider.send('evm_setNextBlockTimestamp', [1798148180]);
         await ethers.provider.send('evm_mine', []);
-        const account1Balance = await ethers.provider.getBalance(account1.address);
+        const account1Balance = await ethers.provider.getBalance(user.address);
         const betAmount = ethers.utils.parseEther('4');
         const ownerFees = betAmount.mul(35).div(1000);
         const ownerBalance = await ethers.provider.getBalance(owner.address);
 
         // Act
-        await coinFlip.connect(account1).flip(true, { value: betAmount });
+        await coinFlip.connect(user).flip(true, { value: betAmount });
 
         // Assert
         expect(
-          account1Balance.add(betAmount.sub(ownerFees)).sub(await ethers.provider.getBalance(account1.address))
+          account1Balance.add(betAmount.sub(ownerFees)).sub(await ethers.provider.getBalance(user.address))
         ).to.lte(ethers.utils.parseEther('0.001'));
 
         expect(ownerBalance.add(ownerFees).sub(await ethers.provider.getBalance(owner.address))).to.lte(
@@ -121,20 +202,20 @@ describe('CoinFlip', function () {
 
       it('Should lose sending opposite tx', async function () {
         // Arrange
-        const { coinFlip, owner, account1 } = await loadFixture(deployCoinFlipFixture);
+        const { coinFlip, owner, user } = await loadFixture(deployCoinFlipFixture);
 
         await ethers.provider.send('evm_setNextBlockTimestamp', [1798148180]);
         await ethers.provider.send('evm_mine', []);
-        const account1Balance = await ethers.provider.getBalance(account1.address);
+        const account1Balance = await ethers.provider.getBalance(user.address);
         const betAmount = ethers.utils.parseEther('4');
         const ownerFees = betAmount.mul(35).div(1000);
         const ownerBalance = await ethers.provider.getBalance(owner.address);
 
         // Act
-        await coinFlip.connect(account1).flip(false, { value: betAmount });
+        await coinFlip.connect(user).flip(false, { value: betAmount });
 
         // Assert
-        expect(account1Balance.sub(betAmount).sub(await ethers.provider.getBalance(account1.address))).to.lte(
+        expect(account1Balance.sub(betAmount).sub(await ethers.provider.getBalance(user.address))).to.lte(
           ethers.utils.parseEther('0.001')
         );
 
@@ -145,20 +226,20 @@ describe('CoinFlip', function () {
 
       it('Should not send rewards to player after losing transaction', async function () {
         // Arrange
-        const { coinFlip, owner, account1 } = await loadFixture(deployCoinFlipFixture);
+        const { coinFlip, owner, user } = await loadFixture(deployCoinFlipFixture);
 
-        await ethers.provider.send('evm_setNextBlockTimestamp', [1685138080]);
+        await ethers.provider.send('evm_setNextBlockTimestamp', [1986138080]);
         await ethers.provider.send('evm_mine', []);
-        const account1Balance = await ethers.provider.getBalance(account1.address);
+        const account1Balance = await ethers.provider.getBalance(user.address);
         const betAmount = ethers.utils.parseEther('4');
         const ownerFees = betAmount.mul(35).div(1000);
         const ownerBalance = await ethers.provider.getBalance(owner.address);
 
         // Act
-        await coinFlip.connect(account1).flip(true, { value: betAmount });
+        await coinFlip.connect(user).flip(true, { value: betAmount });
 
         // Assert
-        expect(account1Balance.sub(betAmount).sub(await ethers.provider.getBalance(account1.address))).to.lte(
+        expect(account1Balance.sub(betAmount).sub(await ethers.provider.getBalance(user.address))).to.lte(
           ethers.utils.parseEther('0.001')
         );
 
