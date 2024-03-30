@@ -68,7 +68,7 @@ const CoinFlipBetAmountSelection = (props: CoinFlipBetAmountSelectionPropsType) 
             ) : (
               <span className='relative flex w-full items-center justify-center py-2.5 font-extrabold uppercase md:px-5'>
                 <div className='scale-[1.5] pr-3'>{getNetworkLogo(currentNetwork.network.chainId, true)}</div>
-                <p className=''>Double or Nothing</p>
+                <p className='text-white'>Double or Nothing</p>
               </span>
             )}
           </Button>

@@ -25,7 +25,7 @@ export function getNetworkLogo(chainId: number, circle?: boolean): ReactNode {
   if (chainId === Moonriver.chainId) {
     if (circle) {
       return (
-        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-black/30'>
+        <div className='flex h-6 w-6 items-center justify-center rounded-full bg-white/40'>
           <MoonriverIcon />
         </div>
       );
@@ -40,7 +40,7 @@ export function getNetworkLogo(chainId: number, circle?: boolean): ReactNode {
   // Default value
   if (circle) {
     return (
-      <div className='flex h-6 w-6 items-center justify-center rounded-full bg-black/30'>
+      <div className='flex h-6 w-6 items-center justify-center rounded-full bg-white/40'>
         <MoonbeamIcon />
       </div>
     );

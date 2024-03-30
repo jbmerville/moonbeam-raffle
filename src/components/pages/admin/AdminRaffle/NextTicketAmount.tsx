@@ -48,7 +48,7 @@ const NextTicketAmount = () => {
         }
         bottomMessage={{
           level: 'INFO',
-          message: <>Next ticket amount is applied for once the raffle is restarted.</>,
+          message: <>Next ticket amount only applies to the next raffle.</>,
         }}
       />
     </div>

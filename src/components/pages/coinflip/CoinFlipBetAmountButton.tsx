@@ -72,8 +72,8 @@ const CoinFlipBetAmountButton = (props: CoinFlipBetAmountButtonPropsType) => {
       }}
       variant={isCurrentSelectedBetAmount ? 'outline' : 'primary'}
       onClick={onButtonClick}
-      className={`box-border flex w-full justify-center p-1 text-sm uppercase text-white md:p-2 md:text-base md:hover:text-base ${
-        isDisabled ? 'bg-moonbeam-grey-light ' : 'font-bold'
+      className={`box-border flex w-full justify-center p-1 text-sm uppercase md:p-2 md:text-base md:hover:text-base ${
+        isDisabled ? 'bg-moonbeam-grey-light text-white' : 'font-bold'
       }`}
     >
       {renderButtonText()}

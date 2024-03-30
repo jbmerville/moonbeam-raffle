@@ -17,12 +17,12 @@ const NextTicketPrice = () => {
   const coinFlipBalanceCard: InfoCardPropsType = {
     title: (
       <div>
-        {parseFloat(utils.formatEther(raffleState.ticketPrice))} {currentNetwork.currencySymbol} /{' '}
+        {parseFloat(utils.formatEther(raffleState.ticketPrice))} {currentNetwork.currencySymbol} -{' '}
         {parseFloat(utils.formatEther(raffleState.ticketPrice))} {currentNetwork.currencySymbol}
       </div>
     ),
 
-    subtitle: <>Current Ticket Price / Next Ticket Price</>,
+    subtitle: <>Current Ticket Price - Next Ticket Price</>,
     isLoading: isRaffleStateFetching,
   };
 
